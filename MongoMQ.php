@@ -3,7 +3,7 @@
  * MongoMQ class file
  *
  * @author 			Pavel E. Tetyaev <pahanini@gmail.com>
- * @version 		0.1
+ * @version 		0.2
  */
 
 /**
@@ -19,12 +19,20 @@ class MongoMQ extends CApplicationComponent
 	private $_recipientsCollection;
 	private $_recipientName;
 
-	public $dir;
-
 	/**
 	 * @var string name of database
 	 */
 	public $db;
+
+	/**
+	 * @var string name of queue collection
+	 */
+	public $messagesCollectionName = 'mongoMQMessages';
+
+	/**
+	 * @var name of EMongoClient component
+	 */
+	public $mongoID;
 
 	/**
 	 * @var array MongoClient options
@@ -37,14 +45,9 @@ class MongoMQ extends CApplicationComponent
 	public $phpPath;
 
 	/**
-	 * @var string name of queue collection
-	 */
-	public $queueCollectionName = 'messageQueue';
-
-	/**
 	 * @var string name of recipients collection
 	 */
-	public $recipientsCollectionName = 'messageRecipients';
+	public $recipientsCollectionName = 'mongoMQRecipients';
 
 	/**
 	 * @var int Limits starting of message with LA
@@ -66,7 +69,7 @@ class MongoMQ extends CApplicationComponent
 	 */
 	public function clearMessages()
 	{
-		$this->getQueueCollection()->remove(array());
+		MongoMQMessage::model()->deleteAll();
 	}
 
 	/**
@@ -74,7 +77,7 @@ class MongoMQ extends CApplicationComponent
 	 */
 	public function clearRecipients()
 	{
-		$this->getRecipientsCollection()->remove(array());
+		MongoMQRecipient::model()->deleteAll();
 	}
 
 	/**
@@ -84,26 +87,9 @@ class MongoMQ extends CApplicationComponent
 	 */
 	public function createMessage()
 	{
-		return new MongoMQMessage($this);
+		return new MongoMQMessage();
 	}
 
-	/**
-	 * @ignore
-	 */
-	private function getConnection()
-	{
-		if (!$this->_connection)
-		{
-			if(version_compare(phpversion('mongo'), '1.3.0', '<'))
-			{
-				$this->_connection = new Mongo($this->server, $this->options);
-				$this->_connection->connect();
-			}
-			else
-				$this->_connection = new MongoClient($this->server, $this->options);
-		}
-		return $this->_connection;
-	}
 
 	/**
 	 * Gets the database
@@ -123,7 +109,7 @@ class MongoMQ extends CApplicationComponent
 	{
 		if (!$this->_queueCollection)
 			$this->_queueCollection = $this->getDb()
-				->selectCollection($this->queueCollectionName);
+				->selectCollection($this->messagesCollectionName);
 		return $this->_queueCollection;
 	}
 
@@ -165,8 +151,6 @@ class MongoMQ extends CApplicationComponent
 	 */
 	public function init()
 	{
-		if (!$this->dir)
-			$this->dir = Yii::app()->basePath;
 		if (!$this->recipientName)
 			$this->recipientName = Yii::app()->name;
 		if (!$this->phpPath)
@@ -200,7 +184,7 @@ class MongoMQ extends CApplicationComponent
 		// We use dbcommand here for older versions of mongo driver (before 1.3.0)
 		$res = $this->getDb()->command(
 			array(
-				'findandmodify' => $this->queueCollectionName,
+				'findandmodify' => $this->messagesCollectionName,
 				'query' => $query,
 				'update' => $update,
 				'new' => true,
@@ -208,7 +192,7 @@ class MongoMQ extends CApplicationComponent
 			)
 		);
 		if ($res['value'])
-			return new MongoMQMessage($this, $res['value']);
+			return MongoMQMessage::model()->populateRecord($res['value']);
 		return null;
 	}
 
@@ -243,11 +227,21 @@ class MongoMQ extends CApplicationComponent
 
 	/**
 	 * Sets the database
+	 *
 	 * @param $name
+	 * @throws CException
+	 * @return void
 	 */
 	public function setDB($name)
 	{
-		$this->_db = $this->getConnection()->selectDb($name);
+		if ($this->mongoID)
+		{
+			$mongodb = Yii::app()->getComponent($this->mongoID);
+			if (!$mongodb instanceof EMongoClient)
+				throw new CException("Application component {$this->mongoID} must be instance of EMongoClient");
+			$this->_db = $mongodb->getDb($name);
+		}
+		return $this->_db;
 	}
 
 
@@ -269,5 +263,4 @@ class MongoMQ extends CApplicationComponent
 			$this->_recipientName = $name;
 		}
 	}
-
 }

@@ -8,8 +8,9 @@ class MongoMQTest extends CTestCase
 		// Create mq and clear all messages
 		/** @var $mq MessageMQ   */
 		$mq = Yii::app()->mongoMQ;
-		$mq->clearMessages();
 		$mq->clearRecipients();
+		$mq->clearMessages();
+
 
 		// Check set recipient name
 		$mq->recipientName = 'test1';
@@ -34,6 +35,9 @@ class MongoMQTest extends CTestCase
 		$message->body('ERRORCOMMAND 3')
 			->priority(100)
 			->send();
+
+		// Ensure 3 messages in collection
+		$this->assertEquals(3, MongoMQMessage::model()->find()->count());
 
 		// Receive message with higher priority first
 		$message = $mq->receiveMessage();

@@ -3,15 +3,13 @@
  * MongoMQMessage class file
  *
  * @author 			Pavel E. Tetyaev <pahanini@gmail.com>
- * @version 		0.1
+ * @version 		0.2
  */
 
 /**
- * MongoMQMessage - message object for MonogoMQ
- *
- * @author Pavel E. Tetyaev <pahanini@gmail.com>
+ * MongoMQMessage - message document for MongoMQ
  */
-class MongoMQMessage
+class MongoMQMessage extends MongoMQDocument
 {
 	const PHP_PLACEHOLDER = 'PHP';
 
@@ -25,47 +23,11 @@ class MongoMQMessage
 
 	const STATUS_SUCCESS = 3;
 
-	private $_body = '';
+	public $body = '';
 
-	private $_completed;
+	public $recipient='';
 
-	private $_exitCode = false;
-
-	private $_priority = 1;
-
-	private $_queue;
-
-	private $_recivied;
-
-	private $_status = self::STATUS_NEW;
-
-	public function __construct(MongoMQ $queue, $attributes = null)
-	{
-		$this->_queue = $queue;
-		if ($attributes)
-		{
-			$this->_id = isset($attributes['_id']) ? $attributes['_id'] : null;
-			$this->_body = isset($attributes['body']) ? $attributes['body'] : '';
-			$this->_completed = isset($attributes['completed']) ? $attributes['completed'] : 0;
-			$this->_exitCode = isset($attributes['exitCode']) ? $attributes['exitCode'] : false;
-			$this->_priority = isset($attributes['priority']) ? $attributes['priority'] : 1;
-			$this->_recivied = isset($attributes['recivied']) ? $attributes['recivied'] : 0;
-			$this->_status = isset($attributes['status']) ? $attributes['status'] : self::STATUS_NEW;
-		}
-	}
-
-	/**
-	 * Returns message attributes as array (limit)
-	 *
-	 * @return array
-	 */
-	public function asArray()
-	{
-		$result = array(
-
-		);
-		return $result;
-	}
+	public $status = self::STATUS_NEW;
 
 	/**
 	 * Sets message body.
@@ -82,8 +44,13 @@ class MongoMQMessage
 	 */
 	public function body($val)
 	{
-		$this->_body = $val;
+		$this->body = $val;
 		return $this;
+	}
+
+	public function collectionName()
+	{
+		return Yii::app()->mongoMQ->messagesCollectionName;
 	}
 
 	/**
@@ -91,28 +58,24 @@ class MongoMQMessage
 	 */
 	public function execute()
 	{
-		if ($this->_status <> self::STATUS_RECIEVED)
-			throw new CException(__METHOD__ . ' can not execute command with status ' . $this->_status);
+		if ($this->status <> self::STATUS_RECIEVED)
+			throw new CException(__METHOD__ . ' can not execute command with status ' . $this->status);
 		$command = $this->getCommand();
-		$oldDir = getcwd();
-		chdir($this->_queue->dir);
 		exec($command, $output, $exitCode);
-		chdir($oldDir);
-		$this->_completed = new MongoDate();
-		$this->_output = $output;
-		$this->_exitCode = $exitCode;
-		$isOk = $this->_exitCode == 0;
-		$this->_status = $isOk ? self::STATUS_SUCCESS : self::STATUS_ERROR;
-		$result = $this->_queue->getQueueCollection()->update(
+		$this->completed = new MongoDate();
+		$this->output = $output;
+		$this->exitCode = $exitCode;
+		$isOk = $this->exitCode == 0;
+		$this->status = $isOk ? self::STATUS_SUCCESS : self::STATUS_ERROR;
+		$result = $this->getMongoMQ()->getQueueCollection()->update(
 			array('_id' => $this->_id, 'status' => self::STATUS_RECIEVED),
 			array('$set' => array(
-				'exitCode' => $this->_exitCode,
-				'status' => $this->_status,
-				'completed' => $this->_completed,
+				'exitCode' => $this->exitCode,
+				'status' => $this->status,
+				'output' => $this->output,
+				'completed' => $this->completed,
 			)),
-			array(
-				'safe' => true,
-			)
+			$this->getDbConnection()->getDefaultWriteConcern()
 		);
 		if (!$result['ok'])
 			throw new CException(__METHOD__ . " can not update message. Error: " . $result['err']);
@@ -128,8 +91,8 @@ class MongoMQMessage
 	{
 		return str_replace(
 			array(self::PHP_PLACEHOLDER, self::SH_PLACEHOLDER),
-			array($this->_queue->phpPath, $this->_queue->shPath),
-			$this->_body
+			array($this->getMongoMQ()->phpPath, $this->getMongoMQ()->shPath),
+			$this->body
 		);
 	}
 
@@ -140,7 +103,7 @@ class MongoMQMessage
 	 */
 	public function getExitCode()
 	{
-		return $this->_exitCode;
+		return $this->exitCode;
 	}
 
 	/**
@@ -150,7 +113,17 @@ class MongoMQMessage
 	 */
 	public function getOutput()
 	{
-		return $this->_output;
+		return $this->output;
+	}
+
+	/**
+	 * @static
+	 * @param string $class
+	 * @return \MongoMQMessage|\EMongoDocument
+	 */
+	public static function model($class = __CLASS__)
+	{
+		return parent::model($class);
 	}
 
 	/**
@@ -161,7 +134,7 @@ class MongoMQMessage
 	 */
 	public function priority($val = 1)
 	{
-		$this->_priority = $val;
+		$this->priority = $val;
 		return $this;
 	}
 
@@ -209,17 +182,11 @@ class MongoMQMessage
 	 */
 	private function sendToRecipient($recipient = '')
 	{
-		$result = $this->_queue->getQueueCollection()->insert(array(
-			'_id' => new MongoId(),
-			'priority' => $this->_priority,
-			'recipient' => $recipient,
-			'body' => $this->_body,
-			'status' => self::STATUS_NEW,
-			'created' => new MongoDate(),
-		), array(
-			'safe' => true,
-		));
-		if (!$result['ok'])
-			throw new CException(__METHOD__ . ' can not send message ' . $result['errmsg']);
+		if ($recipient)
+			$this->recipient = $recipient;
+		$this->created = new MongoDate();
+		if (!$this->save())
+			throw new CException("Can not send message");
 	}
+
 }

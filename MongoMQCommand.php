@@ -3,7 +3,7 @@
  * MongoMQCommand class file
  *
  * @author 			Pavel E. Tetyaev <pahanini@gmail.com>
- * @version 		0.1
+ * @version 		0.2
  */
 
 /**
@@ -51,9 +51,9 @@ class MongoMQCommand extends CConsoleCommand
 	 *
 	 * @return mixed false if no messages in queue, or exit code
 	 */
-	public function actionRunMessage()
+	public function actionRun()
 	{
-		$this->getMongoMQComponent()->runMessage();
+		$this->getMongoMQComponent()->runOne();
 	}
 
 	/**
@@ -61,6 +61,6 @@ class MongoMQCommand extends CConsoleCommand
 	 */
 	public function actionRunMessages()
 	{
-		$this->getMongoMQComponent()->runMessages();
+		$this->getMongoMQComponent()->run();
 	}
 }

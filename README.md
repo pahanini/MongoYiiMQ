@@ -2,16 +2,16 @@
 ==========
 
 MongoDB based message queuing for php Yii framework.
+Requires to https://github.com/Sammaye/MongoYii Yii extension installed
 
 
 ## Setup
 
 Add to you config components section:
 
-	'mongoMQ' => array(
+	'mongoMQ' => array(			// Internal classes expects this name of component, you can not change it
 		'class' => 'MonogMQ',
-		'server' => 'mongodb://localhost:27017',
-		'db' => 'dbName',
+		'mongoID' => 'mongoID', // MongoYii.EMongoClient component ID
 	),
 
 And to import section:
@@ -50,6 +50,9 @@ To execute messages you need to run:
 
 Indeed you need to run this command as frequently as you need.
 
+## View Messages and Recipients
+
+MongoMQMessage and MongoMQRecipient extends EMongoDocument so you can use standart CGridView to display this objects.
 
 ## Notes
 - You can not use this extension at windows systems
