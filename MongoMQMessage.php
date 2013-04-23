@@ -249,7 +249,7 @@ class MongoMQMessage extends MongoMQDocument
 	 */
 	public function sendToAll()
 	{
-		$recipientsNames = array_keys($this->_queue->getRecipients());
+		$recipientsNames = array_keys($this->getMongoMQ()->getRecipients());
 		foreach($recipientsNames as $val)
 			$this->sendToRecipient($val);
 		return $this;
