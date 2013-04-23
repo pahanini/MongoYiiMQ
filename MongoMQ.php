@@ -3,7 +3,7 @@
  * MongoMQ class file
  *
  * @author 			Pavel E. Tetyaev <pahanini@gmail.com>
- * @version 		0.2
+ * @version 		0.3
  */
 
 /**
@@ -30,6 +30,11 @@ class MongoMQ extends CApplicationComponent
 	public $ifNotQueuedTimeout=0;
 
 	/**
+	 * @var string name of message class
+	 */
+	public $messagesClass = 'MongoMQMessage';
+
+	/**
 	 * @var string name of queue collection
 	 */
 	public $messagesCollectionName = 'mongoMQMessages';
@@ -48,6 +53,11 @@ class MongoMQ extends CApplicationComponent
 	 * @var string path to php
 	 */
 	public $phpPath;
+
+	/**
+	 * @var string name of recipients class
+	 */
+	public $recipientsClass = 'MongoMQRecipient';
 
 	/**
 	 * @var string name of recipients collection
@@ -74,7 +84,8 @@ class MongoMQ extends CApplicationComponent
 	 */
 	public function clearMessages()
 	{
-		MongoMQMessage::model()->deleteAll();
+		$name = $this->messagesClass;
+		$name::model()->deleteAll();
 	}
 
 	/**
@@ -82,7 +93,8 @@ class MongoMQ extends CApplicationComponent
 	 */
 	public function clearRecipients()
 	{
-		MongoMQRecipient::model()->deleteAll();
+		$name = $this->recipientsClass;
+		$name::model()->deleteAll();
 	}
 
 	/**
@@ -92,7 +104,8 @@ class MongoMQ extends CApplicationComponent
 	 */
 	public function createMessage()
 	{
-		return new MongoMQMessage();
+		$name = $this->messagesClass;
+		return new $name;
 	}
 
 
@@ -197,7 +210,10 @@ class MongoMQ extends CApplicationComponent
 			)
 		);
 		if ($res['value'])
-			return MongoMQMessage::model()->populateRecord($res['value']);
+		{
+			$name = $this->messagesClass;
+			return $name::model()->populateRecord($res['value']);
+		}
 		return null;
 	}
 

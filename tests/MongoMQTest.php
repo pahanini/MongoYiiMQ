@@ -83,15 +83,15 @@ class MongoMQTest extends CTestCase
 		$this->assertEquals('bar', $message->executeBody());
 		$this->assertTrue($message->execute());
 
-		// Check ifNotQueued
+		// Check ifNotQueued and category
 		MongoMQMessage::model()->getCollection()->drop();
 		$message = $mq->createMessage();
-		$message->body(array('MongoMQTest', 'foo'))->ifNotQueued(1)->send();
-
+		$message->body(array('MongoMQTest', 'foo'))->category('test')->ifNotQueued(1)->send();
 		$message = $mq->createMessage();
 		$message->body(array('MongoMQTest', 'foo'))->ifNotQueued(1)->send();
-
 		$this->assertEquals(1, $mq->getQueueCollection()->find(array('status' => MongoMQMessage::STATUS_NEW))->count());
+		$this->assertEquals(1, $mq->getQueueCollection()->find(array('category' => 'test'))->count());
+
 	}
 
 

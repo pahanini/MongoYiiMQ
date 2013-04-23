@@ -3,7 +3,7 @@
  * MongoMQMessage class file
  *
  * @author 			Pavel E. Tetyaev <pahanini@gmail.com>
- * @version 		0.2
+ * @version 		0.3
  */
 
 /**
@@ -53,6 +53,16 @@ class MongoMQMessage extends MongoMQDocument
 	public function body($val)
 	{
 		$this->body = $val;
+		return $this;
+	}
+
+	/**
+	 * @param null $val
+	 * @return MongoMQMessage
+	 */
+	public function category($val=null)
+	{
+		$this->category=$val;
 		return $this;
 	}
 
