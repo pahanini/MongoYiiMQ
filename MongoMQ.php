@@ -25,6 +25,11 @@ class MongoMQ extends CApplicationComponent
 	public $db;
 
 	/**
+	 * @var int
+	 */
+	public $ifNotQueuedTimeout=0;
+
+	/**
 	 * @var string name of queue collection
 	 */
 	public $messagesCollectionName = 'mongoMQMessages';

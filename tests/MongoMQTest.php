@@ -3,6 +3,11 @@ require_once 'bootstrap.php';
 
 class MongoMQTest extends CTestCase
 {
+	public static function foo()
+	{
+		return 'bar';
+	}
+
 	public function testMain()
 	{
 		// Create mq and clear all messages
@@ -70,6 +75,23 @@ class MongoMQTest extends CTestCase
 		$this->assertEquals(1, $mq->getQueueCollection()
 			->find(array('status' => MongoMQMessage::STATUS_ERROR))->count());
 
+		// Test user function as body
+		$message = $mq->createMessage();
+		$message->body(array('MongoMQTest', 'foo'))->send();
+		$message = $mq->receiveMessage();
+		$this->assertInstanceOf('MongoMQMessage', $message);
+		$this->assertEquals('bar', $message->executeBody());
+		$this->assertTrue($message->execute());
+
+		// Check ifNotQueued
+		MongoMQMessage::model()->getCollection()->drop();
+		$message = $mq->createMessage();
+		$message->body(array('MongoMQTest', 'foo'))->ifNotQueued(1)->send();
+
+		$message = $mq->createMessage();
+		$message->body(array('MongoMQTest', 'foo'))->ifNotQueued(1)->send();
+
+		$this->assertEquals(1, $mq->getQueueCollection()->find(array('status' => MongoMQMessage::STATUS_NEW))->count());
 	}
 
 

@@ -15,15 +15,23 @@ class MongoMQMessage extends MongoMQDocument
 
 	const SH_PLACEHOLDER = 'SH';
 
-	const STATUS_ERROR = 4;
+	const STATUS_ERROR = 'e';
 
-	const STATUS_NEW = 1;
+	const STATUS_NEW = 'n';
 
-	const STATUS_RECIEVED = 2;
+	const STATUS_RECIEVED = 'r';
 
-	const STATUS_SUCCESS = 3;
+	const STATUS_SUCCESS = 's';
 
 	public $body = '';
+
+	public $exitCode;
+
+	public $hash;
+
+	private $ifNotQueued=false;
+
+	public $output;
 
 	public $recipient='';
 
@@ -39,7 +47,7 @@ class MongoMQMessage extends MongoMQDocument
 	 * SH deploy_script.sh
 	 * PHP run_some_task.php --param1 --param2
 	 *
-	 * @param int $val
+	 * @param string|array $val
 	 * @return MongoMQMessage
 	 */
 	public function body($val)
@@ -48,6 +56,9 @@ class MongoMQMessage extends MongoMQDocument
 		return $this;
 	}
 
+	/**
+	 * @return string|void name of collection
+	 */
 	public function collectionName()
 	{
 		return Yii::app()->mongoMQ->messagesCollectionName;
@@ -60,13 +71,22 @@ class MongoMQMessage extends MongoMQDocument
 	{
 		if ($this->status <> self::STATUS_RECIEVED)
 			throw new CException(__METHOD__ . ' can not execute command with status ' . $this->status);
-		$command = $this->getCommand();
-		exec($command, $output, $exitCode);
+
+		try
+		{
+			$this->status = $this->executeBody() ? self::STATUS_SUCCESS : self::STATUS_ERROR;
+		}
+		catch (Exception $e)
+		{
+			$this->status = self::STATUS_ERROR;
+		}
+
 		$this->completed = new MongoDate();
-		$this->output = $output;
-		$this->exitCode = $exitCode;
-		$isOk = $this->exitCode == 0;
-		$this->status = $isOk ? self::STATUS_SUCCESS : self::STATUS_ERROR;
+
+		// Change write concern
+		$w = Yii::app()->mongodb->w;
+		Yii::app()->mongodb->w = 1;
+
 		$result = $this->getMongoMQ()->getQueueCollection()->update(
 			array('_id' => $this->_id, 'status' => self::STATUS_RECIEVED),
 			array('$set' => array(
@@ -77,9 +97,28 @@ class MongoMQMessage extends MongoMQDocument
 			)),
 			$this->getDbConnection()->getDefaultWriteConcern()
 		);
-		if (!$result['ok'])
-			throw new CException(__METHOD__ . " can not update message. Error: " . $result['err']);
-		return (bool)$isOk;
+
+		// Restore
+		Yii::app()->mongodb->w = $w;
+
+		if (!$result['ok']) throw new CException(__METHOD__ . " can not update message. Error: " . $result['err']);
+
+		return $this->status == self::STATUS_SUCCESS;
+	}
+
+	/**
+	 * Executes message body but don't change statuses
+	 */
+	public function executeBody()
+	{
+		if (is_array($this->body))
+			return call_user_func_array($this->body, is_array($this->params) ? $this->params : array());
+
+		$command = $this->getCommand();
+		exec($command, $output, $exitCode);
+		$this->output = $output;
+		$this->exitCode = $exitCode;
+		return $this->exitCode == 0;
 	}
 
 	/**
@@ -107,6 +146,14 @@ class MongoMQMessage extends MongoMQDocument
 	}
 
 	/**
+	 * @return string
+	 */
+	public function getHash()
+	{
+		return md5(serialize($this->body) . serialize($this->params));
+	}
+
+	/**
 	 * Returns message handler output
 	 *
 	 * @return int
@@ -117,6 +164,17 @@ class MongoMQMessage extends MongoMQDocument
 	}
 
 	/**
+	 * Make sure message does not exists in queue before send
+	 * @param bool $val
+	 * @return MongoMQMessage
+	 */
+	public function ifNotQueued($val=true)
+	{
+		$this->ifNotQueued = $val;
+		return $this;
+	}
+
+	/**
 	 * @static
 	 * @param string $class
 	 * @return \MongoMQMessage|\EMongoDocument
@@ -124,6 +182,16 @@ class MongoMQMessage extends MongoMQDocument
 	public static function model($class = __CLASS__)
 	{
 		return parent::model($class);
+	}
+
+	/**
+	 * @param null $val
+	 * @return MongoMQMessage
+	 */
+	public function params($val=null)
+	{
+		$this->params=$val;
+		return $this;
 	}
 
 	/**
@@ -182,9 +250,28 @@ class MongoMQMessage extends MongoMQDocument
 	 */
 	private function sendToRecipient($recipient = '')
 	{
-		if ($recipient)
-			$this->recipient = $recipient;
+		if ($recipient) $this->recipient = $recipient;
 		$this->created = new MongoDate();
+		$this->hash = $this->getHash();
+		if ($this->ifNotQueued)
+		{
+			if (($this->ifNotQueued > 0) && ($cache=Yii::app()->getComponent('cache')))
+			{
+				$id = __CLASS__ . $this->hash;
+				if ($cache->get($id))
+					return false;
+
+				$cache->set($id, true, time() + $this->ifNotQueued);
+			}
+
+			$count = $this->find(array(
+				'hash' => $this->hash,
+				'status' => array('$in' => array(self::STATUS_NEW, self::STATUS_RECIEVED))
+			))->count();
+
+			if ($count)
+				return false;
+		}
 		if (!$this->save())
 			throw new CException("Can not send message");
 	}
