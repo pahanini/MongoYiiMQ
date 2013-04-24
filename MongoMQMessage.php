@@ -71,7 +71,7 @@ class MongoMQMessage extends MongoMQDocument
 	 */
 	public function collectionName()
 	{
-		return Yii::app()->mongoMQ->messagesCollectionName;
+		return 'MQMessages';
 	}
 
 	/**

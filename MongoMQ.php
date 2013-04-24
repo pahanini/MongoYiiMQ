@@ -15,8 +15,6 @@ class MongoMQ extends CApplicationComponent
 {
 	public $_db;
 	public $_connection;
-	private $_queueCollection;
-	private $_recipientsCollection;
 	private $_recipientName;
 
 	/**
@@ -33,11 +31,6 @@ class MongoMQ extends CApplicationComponent
 	 * @var string name of message class
 	 */
 	public $messagesClass = 'MongoMQMessage';
-
-	/**
-	 * @var string name of queue collection
-	 */
-	public $messagesCollectionName = 'mongoMQMessages';
 
 	/**
 	 * @var name of EMongoClient component
@@ -58,11 +51,6 @@ class MongoMQ extends CApplicationComponent
 	 * @var string name of recipients class
 	 */
 	public $recipientsClass = 'MongoMQRecipient';
-
-	/**
-	 * @var string name of recipients collection
-	 */
-	public $recipientsCollectionName = 'mongoMQRecipients';
 
 	/**
 	 * @var int Limits starting of message with LA
@@ -125,10 +113,8 @@ class MongoMQ extends CApplicationComponent
 	 */
 	public  function getQueueCollection()
 	{
-		if (!$this->_queueCollection)
-			$this->_queueCollection = $this->getDb()
-				->selectCollection($this->messagesCollectionName);
-		return $this->_queueCollection;
+		$name = $this->messagesClass;
+		return $name::model()->collection;
 	}
 
 	/**
@@ -148,10 +134,8 @@ class MongoMQ extends CApplicationComponent
 	 */
 	public function getRecipientsCollection()
 	{
-		if (!$this->_recipientsCollection)
-			$this->_recipientsCollection = $this->getDb()
-				->selectCollection($this->recipientsCollectionName);
-		return $this->_recipientsCollection;
+		$name = $this->recipientsClass;
+		return $name::model()->collection;
 	}
 
 	/**
@@ -185,6 +169,8 @@ class MongoMQ extends CApplicationComponent
 	 */
 	public function receiveMessage()
 	{
+		$name=$this->messagesClass;
+		$messagesCollectionName = $name::model()->collectionName();
 		$query = array(
 			'status' => MongoMQMessage::STATUS_NEW,
 			'$or' => array(
@@ -202,19 +188,15 @@ class MongoMQ extends CApplicationComponent
 		// We use dbcommand here for older versions of mongo driver (before 1.3.0)
 		$res = $this->getDb()->command(
 			array(
-				'findandmodify' => $this->messagesCollectionName,
+				'findandmodify' => $messagesCollectionName,
 				'query' => $query,
 				'update' => $update,
 				'new' => true,
 				'sort' => $sort,
 			)
 		);
-		if ($res['value'])
-		{
-			$name = $this->messagesClass;
-			return $name::model()->populateRecord($res['value']);
-		}
-		return null;
+
+		return $res['value'] ? $name::model()->populateRecord($res['value']) : null;
 	}
 
 	/**

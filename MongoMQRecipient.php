@@ -15,7 +15,7 @@ class MongoMQRecipient extends MongoMQDocument
 
 	public function collectionName()
 	{
-		return Yii::app()->mongoMQ->recipientsCollectionName;
+		return 'MQRecipients';
 	}
 
 	public function getMongoId($val)
