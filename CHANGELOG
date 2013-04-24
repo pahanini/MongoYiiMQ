@@ -1,5 +1,6 @@
 - Remove collection names param
 - Bug fixes
+- Change MongoMQCommand action names
 
 Version 0.3 25.04.13
  -------------------
