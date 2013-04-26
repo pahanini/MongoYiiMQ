@@ -16,7 +16,6 @@ class MongoMQTest extends CTestCase
 		$mq->clearRecipients();
 		$mq->clearMessages();
 
-
 		// Check set recipient name
 		$mq->recipientName = 'test1';
 		$mq->recipientName = 'test2';

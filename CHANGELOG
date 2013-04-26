@@ -1,3 +1,13 @@
+- Remove collection names param
+- Bug fixes
+- Change MongoMQCommand action names
+
+Version 0.3 25.04.13
+ -------------------
+- Callback function for message body
+- Ability to create own classes for messages
+- Minor bug fixes
+
 Version 0.2 03.04.13
  -------------------
 - MongoMQMessage, MongoMQRecipient extends EMongoDocument

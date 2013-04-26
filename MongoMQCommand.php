@@ -51,7 +51,7 @@ class MongoMQCommand extends CConsoleCommand
 	 *
 	 * @return mixed false if no messages in queue, or exit code
 	 */
-	public function actionRun()
+	public function actionRunOne()
 	{
 		$this->getMongoMQComponent()->runOne();
 	}
@@ -59,7 +59,7 @@ class MongoMQCommand extends CConsoleCommand
 	/**
 	 * Runs all messages (limited by runLimit)
 	 */
-	public function actionRunMessages()
+	public function actionRun()
 	{
 		$this->getMongoMQComponent()->run();
 	}
