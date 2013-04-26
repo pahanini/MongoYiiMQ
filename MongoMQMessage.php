@@ -67,6 +67,16 @@ class MongoMQMessage extends MongoMQDocument
 	}
 
 	/**
+	 * @param null $val
+	 * @return MongoMQMessage
+	 */
+	public function comment($val=null)
+	{
+		$this->comment=$val;
+		return $this;
+	}
+
+	/**
 	 * @return string|void name of collection
 	 */
 	public function collectionName()
