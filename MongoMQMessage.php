@@ -284,7 +284,7 @@ class MongoMQMessage extends MongoMQDocument
 				if ($cache->get($id))
 					return false;
 
-				$cache->set($id, true, time() + $this->ifNotQueued);
+				$cache->set($id, true, $this->ifNotQueued);
 			}
 
 			$count = $this->find(array(
