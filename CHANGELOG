@@ -1,6 +1,8 @@
 - Remove collection names param
 - Bug fixes
 - Change MongoMQCommand action names
+- Add comment attribute to message
+- Add command lock
 
 Version 0.3 25.04.13
  -------------------

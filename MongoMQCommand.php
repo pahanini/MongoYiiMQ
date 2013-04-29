@@ -14,10 +14,28 @@
  */
 class MongoMQCommand extends CConsoleCommand
 {
-	/**
+	private $_fp;
+
+		/**
 	 * @var string MongoMQ component
 	 */
 	public $mongoMQID = 'mongoMQ';
+
+	public function getLock()
+	{
+		$file=$this->getLockFileName();
+		if (!$this->_fp = fopen($file, 'w+'))
+		{
+			Yii::log("Can not open file $file for writing");
+			return false;
+		}
+		return  flock($this->_fp, LOCK_EX | LOCK_NB);
+	}
+
+	public function getLockFileName()
+	{
+		return Yii::app()->runtimePath.'/'.get_class($this).'.lock';
+	}
 
 	/**
 	 * Returns MongoMQ appication component
@@ -62,5 +80,12 @@ class MongoMQCommand extends CConsoleCommand
 	public function actionRun()
 	{
 		$this->getMongoMQComponent()->run();
+	}
+
+	public function beforeAction($action, $params)
+	{
+		if (!$this->getLock())
+			return false;
+		return parent::beforeAction($action, $params);
 	}
 }

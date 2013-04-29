@@ -118,4 +118,15 @@ class MongoMQTest extends CTestCase
 		$this->assertEquals(1, $mq->getQueueCollection()
 			->find(array('status' => MongoMQMessage::STATUS_NEW))->count());
 	}
+
+	public function testLock()
+	{
+		Yii::app()->setRuntimePath(dirname(__FILE__));
+		$command1=new MongoMQCommand('c1', null);
+		$command2=new MongoMQCommand('c2', null);
+		$this->assertTrue($command1->getLock());
+		$this->assertFalse($command2->getLock());
+		$this->assertTrue(file_exists($command1->getLockFileName()));
+		unlink($command1->getLockFileName());
+	}
 }
