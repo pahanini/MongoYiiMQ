@@ -25,6 +25,8 @@ class MongoMQMessage extends MongoMQDocument
 
 	public $body = '';
 
+	public $comment;
+
 	public $exitCode;
 
 	public $hash;
@@ -55,6 +57,17 @@ class MongoMQMessage extends MongoMQDocument
 		$this->body = $val;
 		return $this;
 	}
+
+	/**
+	 * @param null $val
+	 * @return MongoMQMessage
+	 */
+	public function comment($val=null)
+	{
+		$this->comment=$val;
+		return $this;
+	}
+
 
 	/**
 	 * @param null $val
@@ -281,7 +294,7 @@ class MongoMQMessage extends MongoMQDocument
 				if ($cache->get($id))
 					return false;
 
-				$cache->set($id, true, time() + $this->ifNotQueued);
+				$cache->set($id, true, $this->ifNotQueued);
 			}
 
 			$count = $this->find(array(
