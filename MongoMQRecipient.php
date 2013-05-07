@@ -18,9 +18,9 @@ class MongoMQRecipient extends MongoMQDocument
 		return 'MQRecipients';
 	}
 
-	public function getMongoId($val)
+	public function getMongoId($value = null)
 	{
-		return (string)$val;
+		return (string)$value;
 	}
 
 	/**
