@@ -14,6 +14,12 @@
 class MongoMQBaseCommand extends CConsoleCommand
 {
 	/**
+	 * @var string MongoMQ component
+	 */
+	public $mongoMQID = 'mongoMQ';
+
+
+	/**
 	 * @throws CException
 	 * @return \MongoMQ appication component
 	 */

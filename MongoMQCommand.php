@@ -16,11 +16,6 @@ class MongoMQCommand extends MongoMQBaseCommand
 {
 	private $_fp;
 
-		/**
-	 * @var string MongoMQ component
-	 */
-	public $mongoMQID = 'mongoMQ';
-
 	public function getLock()
 	{
 		$file=$this->getLockFileName();
