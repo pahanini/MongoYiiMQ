@@ -134,13 +134,19 @@ class MongoMQMessage extends MongoMQDocument
 	public function executeBody()
 	{
 		if (is_array($this->body))
-			return call_user_func_array($this->body, is_array($this->params) ? $this->params : array());
-
-		$command = $this->getCommand();
-		exec($command, $output, $exitCode);
-		$this->output = $output;
-		$this->exitCode = $exitCode;
-		return $this->exitCode == 0;
+		{
+			$this->exitCode = call_user_func_array($this->body, is_array($this->params) ? $this->params : array());
+			$this->output = Yii::getLogger()->getLogs();
+			return $this->exitCode == true;
+		}
+		else
+		{
+			$command = $this->getCommand();
+			exec($command, $output, $exitCode);
+			$this->output = $output;
+			$this->exitCode = $exitCode;
+			return $this->exitCode == 0;
+		}
 	}
 
 	/**

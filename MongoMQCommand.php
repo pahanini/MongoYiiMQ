@@ -7,12 +7,12 @@
  */
 
 /**
- * MongoMQCommand - console command to work with MQ.
+ * MongoMQCommand - console command to run messages.
  *
  * Add this command to command map to work with mongoMQ
  *
  */
-class MongoMQCommand extends CConsoleCommand
+class MongoMQCommand extends MongoMQBaseCommand
 {
 	private $_fp;
 
@@ -35,17 +35,6 @@ class MongoMQCommand extends CConsoleCommand
 	public function getLockFileName()
 	{
 		return Yii::app()->runtimePath.'/'.get_class($this).'.lock';
-	}
-
-	/**
-	 * Returns MongoMQ appication component
-	 */
-	protected function getMongoMQComponent()
-	{
-		$component = Yii::app()->getComponent($this->mongoMQID);
-		if (!$component instanceof MongoMQ)
-			throw new CException(__METHOD__ . ' mongoMQID is invalid, please make sure it refers to the ID of a MongoMQ application component');
-		return $component;
 	}
 
 	/**

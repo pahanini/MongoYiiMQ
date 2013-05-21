@@ -79,7 +79,7 @@ class MongoMQTest extends CTestCase
 		$message->body(array('MongoMQTest', 'foo'))->send();
 		$message = $mq->receiveMessage();
 		$this->assertInstanceOf('MongoMQMessage', $message);
-		$this->assertEquals('bar', $message->executeBody());
+		$this->assertEquals(true, $message->executeBody());
 		$this->assertTrue($message->execute());
 
 		// Check ifNotQueued and category
