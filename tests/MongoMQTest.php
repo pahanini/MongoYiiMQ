@@ -40,8 +40,14 @@ class MongoMQTest extends CTestCase
 			->priority(100)
 			->send();
 
+		// Test send all
+		$message = $mq->createMessage();
+		$message->body('echo 3')
+			->priority(1)
+			->sendToAll();
+
 		// Ensure 3 messages in collection
-		$this->assertEquals(3, MongoMQMessage::model()->find()->count());
+		$this->assertEquals(5, MongoMQMessage::model()->find()->count());
 
 		// Receive message with higher priority first
 		$message = $mq->receiveMessage();
@@ -64,12 +70,19 @@ class MongoMQTest extends CTestCase
 		$this->assertTrue($message->execute());
 		$this->assertEquals(0, $message->getExitCode());
 
-		// No more messages
+		// Receive message
+		$message = $mq->receiveMessage();
+		$this->assertTrue($message instanceof MongoMQMessage);
+		$this->assertEquals('echo 3', $message->getCommand());
+		$this->assertTrue($message->execute());
+		$this->assertEquals(0, $message->getExitCode());
+
+		// No more messages for this recipient
 		$message = $mq->receiveMessage();
 		$this->assertNull($message);
 
 		// Check statuses in database
-		$this->assertEquals(2, $mq->getQueueCollection()
+		$this->assertEquals(3, $mq->getQueueCollection()
 				->find(array('status' => MongoMQMessage::STATUS_SUCCESS))->count());
 		$this->assertEquals(1, $mq->getQueueCollection()
 			->find(array('status' => MongoMQMessage::STATUS_ERROR))->count());

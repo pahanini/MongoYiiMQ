@@ -288,7 +288,6 @@ class MongoMQMessage extends MongoMQDocument
 				$id = __CLASS__ . $this->hash;
 				if ($cache->get($id))
 					return false;
-
 				$cache->set($id, true, $this->ifNotQueued);
 			}
 
@@ -300,8 +299,11 @@ class MongoMQMessage extends MongoMQDocument
 			if ($count)
 				return false;
 		}
-		if (!$this->save())
-			throw new CException("Can not send message");
+		$w=$this->getDbConnection()->w;
+		$this->getDbConnection()->w=1;
+		$result=$this->getCollection()->insert($this->getAttributes());
+		if (!$result['ok']) throw new CException("Can not send message " . print_r($result));
+		$this->getDbConnection()->w=$w;
 	}
 
 }
