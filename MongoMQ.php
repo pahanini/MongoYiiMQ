@@ -204,7 +204,7 @@ class MongoMQ extends CApplicationComponent
 			)
 		);
 		$update = array('$set' => array(
-			'status' => MongoMQMessage::STATUS_RECIEVED,
+			'status' => MongoMQMessage::STATUS_RECEIVED,
 			"received" => new MongoDate(),
 			"recipient" => $this->recipientName,
 		));

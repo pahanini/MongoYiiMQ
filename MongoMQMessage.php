@@ -24,7 +24,7 @@ class MongoMQMessage extends MongoMQDocument
 
 	const STATUS_NEW = 'n';
 
-	const STATUS_RECIEVED = 'r';
+	const STATUS_RECEIVED = 'r';
 
 	const STATUS_SUCCESS = 's';
 
@@ -116,7 +116,7 @@ class MongoMQMessage extends MongoMQDocument
 	 */
 	public function execute()
 	{
-		if ($this->status <> self::STATUS_RECIEVED)
+		if ($this->status <> self::STATUS_RECEIVED)
 			throw new CException(__METHOD__ . ' can not execute command with status ' . $this->status);
 
 		try
@@ -135,7 +135,7 @@ class MongoMQMessage extends MongoMQDocument
 		Yii::app()->mongodb->w = 1;
 
 		$result = $this->getMongoMQ()->getQueueCollection()->update(
-			array('_id' => $this->_id, 'status' => self::STATUS_RECIEVED),
+			array('_id' => $this->_id, 'status' => self::STATUS_RECEIVED),
 			array(
 				'$set' => array(
 					'exitCode' => $this->exitCode,

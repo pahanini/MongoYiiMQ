@@ -170,7 +170,7 @@ class MongoMQTest extends CTestCase
 		$this->assertTrue($message->save());
 
 		$mq->receivedTimeout=1;
-		$this->assertEquals(1, $message->withTimeout(MongoMQMessage::STATUS_RECIEVED, 'received', 1)->find()->count());
+		$this->assertEquals(1, $message->withTimeout(MongoMQMessage::STATUS_RECEIVED, 'received', 1)->find()->count());
 
 
 		//$mq->handleTimeouts();
