@@ -8,6 +8,11 @@
 
 /**
  * MongoMQMessage - message document for MongoMQ
+ *
+ * @property string $comment
+ * @property string $hash
+ * @property MongoData $completed
+ * @property MongoData $received
  */
 class MongoMQMessage extends MongoMQDocument
 {
@@ -25,11 +30,14 @@ class MongoMQMessage extends MongoMQDocument
 
 	public $body = '';
 
-	public $comment;
+	public $category='';
+
+	/**
+	 * @var MongoDate
+	 */
+	public $created;
 
 	public $exitCode;
-
-	public $hash;
 
 	private $ifNotQueued=false;
 
@@ -56,6 +64,23 @@ class MongoMQMessage extends MongoMQDocument
 	{
 		$this->body = $val;
 		return $this;
+	}
+
+	/**
+	 * @param $val
+	 * @return string
+	 */
+	public function calcCacheId($val)
+	{
+		return __CLASS__ . $val;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function calcHash()
+	{
+		return md5(serialize($this->body) . serialize($this->params) . $this->category);
 	}
 
 	/**
@@ -111,14 +136,23 @@ class MongoMQMessage extends MongoMQDocument
 
 		$result = $this->getMongoMQ()->getQueueCollection()->update(
 			array('_id' => $this->_id, 'status' => self::STATUS_RECIEVED),
-			array('$set' => array(
-				'exitCode' => $this->exitCode,
-				'status' => $this->status,
-				'output' => $this->output,
-				'completed' => $this->completed,
-			)),
+			array(
+				'$set' => array(
+					'exitCode' => $this->exitCode,
+					'status' => $this->status,
+					'output' => $this->output,
+					'completed' => $this->completed,
+				),
+				'$unset' => array(
+					'hash' => true,
+				)
+			),
 			$this->getDbConnection()->getDefaultWriteConcern()
 		);
+
+		if ($this->getMongoMQ()->useCache && $this->hash)
+			Yii::app()->cache->delete($this->calcCacheId($this->hash));
+
 
 		// Restore
 		Yii::app()->mongodb->w = $w;
@@ -171,14 +205,6 @@ class MongoMQMessage extends MongoMQDocument
 	public function getExitCode()
 	{
 		return $this->exitCode;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getHash()
-	{
-		return md5(serialize($this->body) . serialize($this->params));
 	}
 
 	/**
@@ -280,30 +306,58 @@ class MongoMQMessage extends MongoMQDocument
 	{
 		if ($recipient) $this->recipient = $recipient;
 		$this->created = new MongoDate();
-		$this->hash = $this->getHash();
 		if ($this->ifNotQueued)
 		{
-			if (($this->ifNotQueued > 0) && ($cache=Yii::app()->getComponent('cache')))
+			$this->hash = $this->calcHash();
+			if ($this->getMongoMQ()->useCache)
 			{
-				$id = __CLASS__ . $this->hash;
-				if ($cache->get($id))
-					return false;
-				$cache->set($id, true, $this->ifNotQueued);
+				if (($this->ifNotQueued > 0) && ($cache=Yii::app()->getComponent('cache')))
+				{
+					$id=$this->calcCacheId($this->hash);
+					if ($cache->get($id)) return false;
+					$cache->set($id, true, $this->ifNotQueued);
+				}
 			}
-
-			$count = $this->find(array(
-				'hash' => $this->hash,
-				'status' => array('$in' => array(self::STATUS_NEW, self::STATUS_RECIEVED))
-			))->count();
-
-			if ($count)
-				return false;
 		}
 		$w=$this->getDbConnection()->w;
 		$this->getDbConnection()->w=1;
-		$result=$this->getCollection()->insert($this->getAttributes());
+		if ($this->hash)
+		{
+			$result=$this->getCollection()->update(
+				array('hash'=>$this->hash),
+				array('$set'=>array('hash' => $this->hash)),
+				array('upsert'=>true)
+			);
+			if (empty($result['updatedExisting']))
+			{
+				$this->getCollection()->update(
+					array('hash'=>$this->hash),
+					array('$set'=>$this->getAttributes())
+				);
+			}
+		}
+		else
+			$result=$this->getCollection()->insert($this->getAttributes());
 		if (!$result['ok']) throw new CException("Can not send message " . print_r($result));
 		$this->getDbConnection()->w=$w;
+	}
+
+
+	/**
+	 * @param $status
+	 * @param $attribute
+	 * @param $timeout
+	 * @return MongoMQMessage
+	 */
+	public function withTimeout($status, $attribute, $timeout)
+	{
+		$this->mergeDbCriteria(array(
+			'criteria' => array(
+				'status'=>$status,
+				$attribute => array('$lt' => new MongoDate(time()-$timeout))
+			),
+		));
+		return $this;
 	}
 
 }

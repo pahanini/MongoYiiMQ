@@ -23,6 +23,16 @@ class MongoMQ extends CApplicationComponent
 	public $db;
 
 	/**
+	 * @var int error messages remove from queue timeout (default 30 days)
+	 */
+	public $completedTimeout = 300;
+
+	/**
+	 * @var int error messages remove from queue timeout (default 30 days)
+	 */
+	public $errorTimeout = 2592000;
+
+	/**
 	 * @var int
 	 */
 	public $ifNotQueuedTimeout=0;
@@ -36,6 +46,11 @@ class MongoMQ extends CApplicationComponent
 	 * @var name of EMongoClient component
 	 */
 	public $mongoID;
+
+	/**
+	 * @var int new messages remove from queue timeout (default 5 min)
+	 */
+	public $newTimeout = 0;
 
 	/**
 	 * @var array MongoClient options
@@ -58,6 +73,11 @@ class MongoMQ extends CApplicationComponent
 	public $runLimit = 0;
 
 	/**
+	 * @var int received messages remove from queue timeout (default 1 hour)
+	 */
+	public $receivedTimeout = 3600;
+
+	/**
 	 * @var MongoDb connection string
 	 */
 	public $server = 'mongodb';
@@ -66,6 +86,11 @@ class MongoMQ extends CApplicationComponent
 	 * @var path to sh bin
 	 */
 	public $shPath;
+
+	/**
+	 * @var bool wheather use cache for ifNotQueued checks
+	 */
+	public $useCache = true;
 
 	/**
 	 * Clears messages
@@ -165,7 +190,7 @@ class MongoMQ extends CApplicationComponent
 	/**
 	 * Recieves message from queue
 	 * @throws CException
-	 * @return MongoMQMessage|null
+	 * @return MongoMQMessage
 	 */
 	public function receiveMessage()
 	{
@@ -180,7 +205,7 @@ class MongoMQ extends CApplicationComponent
 		);
 		$update = array('$set' => array(
 			'status' => MongoMQMessage::STATUS_RECIEVED,
-			"recivied" => new MongoDate(),
+			"received" => new MongoDate(),
 			"recipient" => $this->recipientName,
 		));
 		$sort = array('priority' => -1, 'id' => 1);
@@ -200,15 +225,16 @@ class MongoMQ extends CApplicationComponent
 	}
 
 	/**
-	 * Recieves and executes one message
-	 *
-	 * @return mixed null if no messages in queue, or exit code
+	 * Removes old messages from queue
 	 */
-	public function runOne()
+	public function handleTimeouts()
 	{
-		if ($message = $this->receiveMessage())
-			return $message->execute();
-		return null;
+		if ($this->newTimeout)
+			MongoMQMessage::model()->withTimeout(MongoMQMessage::STATUS_NEW, 'completed', $this->newTimeout)->deleteAll();
+		if ($this->receivedTimeout)
+			MongoMQMessage::model()->withTimeout(MongoMQMessage::STATUS_NEW, 'received', $this->receivedTimeout)->deleteAll();
+		if ($this->errorTimeout)
+			MongoMQMessage::model()->withTimeout(MongoMQMessage::STATUS_NEW, 'completed', $this->errorTimeout)->deleteAll();
 	}
 
 	/**
@@ -227,6 +253,19 @@ class MongoMQ extends CApplicationComponent
 			$c++;
 		}
 	}
+
+	/**
+	 * Recieves and executes one message
+	 *
+	 * @return mixed null if no messages in queue, or exit code
+	 */
+	public function runOne()
+	{
+		if ($message = $this->receiveMessage())
+			return $message->execute();
+		return null;
+	}
+
 
 	/**
 	 * Sets the database

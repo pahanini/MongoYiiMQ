@@ -15,6 +15,7 @@
 class MongoMQCommand extends MongoMQBaseCommand
 {
 	private $_fp;
+	private $_senders;
 
 	public function getLock()
 	{
@@ -55,6 +56,7 @@ class MongoMQCommand extends MongoMQBaseCommand
 	 */
 	public function actionRunOne()
 	{
+		$this->runSenders();
 		$this->getMongoMQComponent()->runOne();
 	}
 
@@ -63,13 +65,39 @@ class MongoMQCommand extends MongoMQBaseCommand
 	 */
 	public function actionRun()
 	{
+		$this->runSenders();
 		$this->getMongoMQComponent()->run();
 	}
 
 	public function beforeAction($action, $params)
 	{
-		if (!$this->getLock())
-			return false;
+		if (!$this->getLock()) return false;
+		MongoMQMessage::model()->getCollection()->ensureIndex(array('hash'=>1), array('sparce'=>true, 'dropDups'=>true));
 		return parent::beforeAction($action, $params);
+	}
+
+	/**
+	 * Starts all senders
+	 * @throws CException
+	 */
+	public function runSenders()
+	{
+		foreach($this->_senders as $sender)
+		{
+			if (isset($sender['ID'], $sender['method']))
+			{
+				if (!$component=Yii::app()->getComponent($sender['ID']))
+					throw new CException("Sender component with ID = {$sender['ID']} not found");
+				if (!isset($sender['params'])) $sender['params']=array();
+				call_user_func_array(array($component, $sender['method']), $sender['params']);
+			}
+			else
+				throw new CException('Sender configuration must be an array containing  "ID" and "method" elements');
+		}
+	}
+
+	public function setSenders(array $values)
+	{
+		$this->_senders=$values;
 	}
 }

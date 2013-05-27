@@ -11,7 +11,7 @@ class MongoMQTest extends CTestCase
 	public function testMain()
 	{
 		// Create mq and clear all messages
-		/** @var $mq MessageMQ   */
+		/** @var $mq MongoMQ   */
 		$mq = Yii::app()->mongoMQ;
 		$mq->clearRecipients();
 		$mq->clearMessages();
@@ -97,20 +97,30 @@ class MongoMQTest extends CTestCase
 
 		// Check ifNotQueued and category
 		MongoMQMessage::model()->getCollection()->drop();
+		$mq->useCache=false;
 		$message = $mq->createMessage();
 		$message->body(array('MongoMQTest', 'foo'))->category('test')->ifNotQueued(1)->send();
 		$message = $mq->createMessage();
-		$message->body(array('MongoMQTest', 'foo'))->ifNotQueued(1)->send();
+		$message->body(array('MongoMQTest', 'foo'))->category('test')->ifNotQueued(1)->send();
 		$this->assertEquals(1, $mq->getQueueCollection()->find(array('status' => MongoMQMessage::STATUS_NEW))->count());
 		$this->assertEquals(1, $mq->getQueueCollection()->find(array('category' => 'test'))->count());
 
+		// Test cache usage
+		MongoMQMessage::model()->getCollection()->drop();
+		$mq->useCache=true;
+		$message = $mq->createMessage();
+		$message->body(array('MongoMQTest', 'foo'))->category('test')->ifNotQueued(1)->send();
+		MongoMQMessage::model()->getCollection()->drop();
+		$message = $mq->createMessage();
+		$message->body(array('MongoMQTest', 'foo'))->category('test')->ifNotQueued(1)->send();	// Cache flag stops inserting here
+		$this->assertEquals(0, $mq->getQueueCollection()->find()->count());
 	}
 
 
 	public function testRun()
 	{
 		// Create mq and clear all messages
-		/** @var $mq MessageMQ   */
+		/** @var $mq MongoMQ   */
 		$mq = Yii::app()->mongoMQ;
 		$mq->clearMessages();
 		$mq->clearRecipients();
@@ -142,4 +152,29 @@ class MongoMQTest extends CTestCase
 		$this->assertTrue(file_exists($command1->getLockFileName()));
 		unlink($command1->getLockFileName());
 	}
+
+	public function testTimeouts()
+	{
+		// Create mq and clear all messages
+		/** @var $mq MongoMQ   */
+		$mq = Yii::app()->mongoMQ;
+		$mq->clearMessages();
+		$mq->clearRecipients();
+
+		$message=$mq->createMessage();
+		$message->body("echo 1");
+		$message->send();
+
+		$message=$mq->receiveMessage();
+		$message->received=new MongoDate(time()-10);
+		$this->assertTrue($message->save());
+
+		$mq->receivedTimeout=1;
+		$this->assertEquals(1, $message->withTimeout(MongoMQMessage::STATUS_RECIEVED, 'received', 1)->find()->count());
+
+
+		//$mq->handleTimeouts();
+		//$this->assertEquals(0, MongoMQMessage::model()->count());
+	}
+
 }

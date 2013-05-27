@@ -1,8 +1,14 @@
+Version 0.4 27.05.13
+ -------------------
 - Remove collection names param
+- Add category param
 - Bug fixes
 - Change MongoMQCommand action names
 - Add comment attribute to message
 - Add command lock
+- Enhance 'if not queued' option
+- Add received messages timeout
+- Completed messages timeout
 
 Version 0.3 25.04.13
  -------------------

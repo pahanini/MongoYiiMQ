@@ -8,6 +8,9 @@ return array(
 		'MongoYii.validators.*',
 	),
 	'components'=>array(
+		'cache' => array(
+			'class' => 'CMemCache',
+		),
 		'mongodb' => array(
 			'class' => 'MongoYii.EMongoClient',
 			'server' => 'mongodb://localhost:27017',
