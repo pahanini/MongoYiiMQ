@@ -88,6 +88,11 @@ class MongoMQ extends CApplicationComponent
 	public $shPath;
 
 	/**
+	 * @var int successfully messages remove from queue timeout (default 10 days)
+	 */
+	public $successTimeout = 864000;
+
+	/**
 	 * @var bool wheather use cache for ifNotQueued checks
 	 */
 	public $useCache = true;
@@ -232,9 +237,12 @@ class MongoMQ extends CApplicationComponent
 		if ($this->newTimeout)
 			MongoMQMessage::model()->withTimeout(MongoMQMessage::STATUS_NEW, 'completed', $this->newTimeout)->deleteAll();
 		if ($this->receivedTimeout)
-			MongoMQMessage::model()->withTimeout(MongoMQMessage::STATUS_NEW, 'received', $this->receivedTimeout)->deleteAll();
+			MongoMQMessage::model()->withTimeout(MongoMQMessage::STATUS_RECEIVED, 'received', $this->receivedTimeout)->deleteAll();
 		if ($this->errorTimeout)
-			MongoMQMessage::model()->withTimeout(MongoMQMessage::STATUS_NEW, 'completed', $this->errorTimeout)->deleteAll();
+			MongoMQMessage::model()->withTimeout(MongoMQMessage::STATUS_ERROR, 'completed', $this->errorTimeout)->deleteAll();
+		if ($this->successTimeout)
+			MongoMQMessage::model()->withTimeout(MongoMQMessage::STATUS_SUCCESS, 'completed', $this->successTimeout)->deleteAll();
+
 	}
 
 	/**
