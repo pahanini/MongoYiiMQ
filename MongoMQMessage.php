@@ -315,7 +315,8 @@ class MongoMQMessage extends MongoMQDocument
 				{
 					$id=$this->calcCacheId($this->hash);
 					if ($cache->get($id)) return false;
-					$cache->set($id, true, $this->ifNotQueued);
+					if (!$cache->set($id, true))
+						throw new CException("Can not store value into cache");
 				}
 			}
 		}

@@ -15,7 +15,7 @@
 class MongoMQCommand extends MongoMQBaseCommand
 {
 	private $_fp;
-	private $_senders;
+	private $_senders=array();
 
 	public function getLock()
 	{
