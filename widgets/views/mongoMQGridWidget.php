@@ -42,7 +42,7 @@ $dataProvider = new EMongoDataProvider($model, array(
 	'ajaxUpdate'=>false,
 	'dataProvider'=>$dataProvider,
 	'template'=>"{summary}{items}{pager}",
-	'rowCssClassExpression' => 'MongoMQGrid::getRowClass($data)',
+	'rowCssClassExpression' => 'MongoMQGridWidget::getRowClass($data)',
 	'columns'=>array(
 		array('name'=>'created', 'header'=>'Created', 'value'=>'date("d-m-Y H:i:s", $data->created->sec)'),
 		array('name'=>'received', 'header'=>'Received', 'value'=>'isset($data->received) ? date("H:i:s", $data->received->sec) : ""'),
@@ -57,7 +57,7 @@ $dataProvider = new EMongoDataProvider($model, array(
 		array('name'=>'status',
 			'header'=>'S',
 			'type'=>'raw',
-			'value' => '"<span class=\'label label-" . MongoMQGrid::getLabelClass($data) . "\'>".Yii::t("MongoMQ", $data->status)."</span>"'),
+			'value' => '"<span class=\'label label-" . MongoMQGridWidget::getLabelClass($data) . "\'>".Yii::t("MongoMQ", $data->status)."</span>"'),
 		array('name'=>'category', 'header'=>'Category'),
 	),
 ));
