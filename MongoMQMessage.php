@@ -183,6 +183,14 @@ class MongoMQMessage extends MongoMQDocument
 		}
 	}
 
+	public function attributeLabels()
+	{
+		return array(
+			'status' => 'Status&#160;',
+		);
+	}
+
+
 	/**
 	 * Returns command to execute
 	 *

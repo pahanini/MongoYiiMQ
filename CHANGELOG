@@ -1,3 +1,5 @@
+- Add MongoMQGrid widget (requires Yii-bootstrap extension installed)
+
 Version 0.4 27.05.13
  -------------------
 - Remove collection names param
