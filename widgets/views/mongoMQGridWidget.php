@@ -44,6 +44,10 @@ $dataProvider = new EMongoDataProvider($model, array(
 	'template'=>"{summary}{items}{pager}",
 	'rowCssClassExpression' => 'MongoMQGridWidget::getRowClass($data)',
 	'columns'=>array(
+		array('name'=>'status',
+			'header'=>'S',
+			'type'=>'raw',
+			'value' => '"<span class=\'label label-" . MongoMQGridWidget::getLabelClass($data) . "\'>".Yii::t("MongoMQ", $data->status)."</span>"'),
 		array('name'=>'created', 'header'=>'Created', 'value'=>'date("d-m-Y H:i:s", $data->created->sec)'),
 		array('name'=>'received', 'header'=>'Received', 'value'=>'isset($data->received) ? date("H:i:s", $data->received->sec) : ""'),
 		array('name'=>'completed', 'header'=>'Completed', 'value'=>'isset($data->completed) ? date("H:i:s", $data->completed->sec) : ""'),
@@ -54,11 +58,9 @@ $dataProvider = new EMongoDataProvider($model, array(
 				<a href=\"#\" rel=\"tooltip\" title=\"' . print_r(\$data->output, true) . '\">Output</a>
 			'"
 		),
-		array('name'=>'status',
-			'header'=>'S',
-			'type'=>'raw',
-			'value' => '"<span class=\'label label-" . MongoMQGridWidget::getLabelClass($data) . "\'>".Yii::t("MongoMQ", $data->status)."</span>"'),
 		array('name'=>'category', 'header'=>'Category'),
+		array('name'=>'recipient', 'header'=>'recipient'),
+		array('name'=>'priority', 'header'=>'Pr'),
 	),
 ));
 

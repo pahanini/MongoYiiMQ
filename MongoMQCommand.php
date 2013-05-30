@@ -36,7 +36,7 @@ class MongoMQCommand extends MongoMQBaseCommand
 	/**
 	 * Clears messages
 	 */
-	public function clearMessagesAction()
+	public function actionClear()
 	{
 		$this->getMongoMQComponent()->clearMessages();
 	}
@@ -56,31 +56,25 @@ class MongoMQCommand extends MongoMQBaseCommand
 	 */
 	public function actionRunOne()
 	{
-		$this->runSenders();
+		$this->actionRunSenders();
 		$this->getMongoMQComponent()->runOne();
 	}
+
 
 	/**
 	 * Runs all messages (limited by runLimit)
 	 */
 	public function actionRun()
 	{
-		$this->runSenders();
+		$this->actionRunSenders();
 		$this->getMongoMQComponent()->run();
-	}
-
-	public function beforeAction($action, $params)
-	{
-		if (!$this->getLock()) return false;
-		MongoMQMessage::model()->getCollection()->ensureIndex(array('hash'=>1), array('sparce'=>true, 'dropDups'=>true));
-		return parent::beforeAction($action, $params);
 	}
 
 	/**
 	 * Starts all senders
 	 * @throws CException
 	 */
-	public function runSenders()
+	public function actionRunSenders()
 	{
 		foreach($this->_senders as $sender)
 		{
@@ -95,6 +89,25 @@ class MongoMQCommand extends MongoMQBaseCommand
 				throw new CException('Sender configuration must be an array containing  "ID" and "method" elements');
 		}
 	}
+
+	public function actionShow($n=10)
+	{
+		$cursor = MongoMQMessage::model()->find()->sort(array('created' => -1))->limit($n);
+		foreach ($cursor as $message)
+		{
+			echo date('d-m-Y H:i:s', $message->created->sec) . "\t" . $message->status . "\t" . $message->comment . "\n";
+		}
+	}
+
+
+
+	public function beforeAction($action, $params)
+	{
+		if (!$this->getLock()) return false;
+		MongoMQMessage::model()->getCollection()->ensureIndex(array('hash'=>1), array('sparce'=>true, 'dropDups'=>true));
+		return parent::beforeAction($action, $params);
+	}
+
 
 	public function setSenders(array $values)
 	{

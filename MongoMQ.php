@@ -213,7 +213,7 @@ class MongoMQ extends CApplicationComponent
 			"received" => new MongoDate(),
 			"recipient" => $this->recipientName,
 		));
-		$sort = array('priority' => -1, 'id' => 1);
+		$sort = array('priority' => -1);
 
 		// We use dbcommand here for older versions of mongo driver (before 1.3.0)
 		$res = $this->getDb()->command(

@@ -43,6 +43,8 @@ class MongoMQMessage extends MongoMQDocument
 
 	public $output;
 
+	public $priority=1;
+
 	public $recipient='';
 
 	public $status = self::STATUS_NEW;
@@ -308,6 +310,18 @@ class MongoMQMessage extends MongoMQDocument
 	}
 
 	/**
+	 * Sends message to self
+	 *
+	 * @return MongoMQMessage
+	 */
+	public function sendToMe()
+	{
+		$this->sendToRecipient($this->getMongoMQ()->getRecipientName());
+		return $this;
+	}
+
+
+	/**
 	 * @ignore
 	 */
 	private function sendToRecipient($recipient = '')
@@ -324,7 +338,13 @@ class MongoMQMessage extends MongoMQDocument
 					$id=$this->calcCacheId($this->hash);
 					if ($cache->get($id)) return false;
 					if (!$cache->set($id, true))
-						throw new CException("Can not store value into cache");
+					{
+						if ($cache instanceof CMemCache && $cache->useMemcached)
+							$message=$cache->getMemCache()->getResultMessage();
+						else
+							$message='no additional info';
+						throw new CException("Can not store value into cache ($message)");
+					}
 				}
 			}
 		}

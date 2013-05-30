@@ -1,4 +1,6 @@
 - Add MongoMQGrid widget (requires Yii-bootstrap extension installed)
+- Add MongoMQMessage::sendToMe()
+- Add some useful actions to command
 
 Version 0.4 27.05.13
  -------------------

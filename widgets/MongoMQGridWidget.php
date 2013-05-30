@@ -41,13 +41,16 @@ class MongoMQGridWidget extends CWidget
 							'condition' => array(
 								'status'=>$val,
 							),
+							'sort' => array(
+								'_id' => -1
+							)
 						));
 				}
 			}
 			if (isset($_POST['delete']))
 			{
 				$criteria=$model->getDbCriteria();
-				$model->deleteAll($criteria['condition']);
+				$model->deleteAll(isset($criteria['condition']) ? $criteria['condition'] : array());
 			}
 
 		}
