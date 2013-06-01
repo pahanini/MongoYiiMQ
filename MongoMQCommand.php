@@ -76,8 +76,12 @@ class MongoMQCommand extends MongoMQBaseCommand
 	 */
 	public function actionRunSenders()
 	{
+		if (!$this->_senders)
+			return;
 		foreach($this->_senders as $sender)
 		{
+			if (!$sender)
+				continue;
 			if (isset($sender['ID'], $sender['method']))
 			{
 				if (!$component=Yii::app()->getComponent($sender['ID']))
@@ -109,7 +113,7 @@ class MongoMQCommand extends MongoMQBaseCommand
 	}
 
 
-	public function setSenders(array $values)
+	public function setSenders($values)
 	{
 		$this->_senders=$values;
 	}
