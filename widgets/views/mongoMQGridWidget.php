@@ -8,13 +8,17 @@ $form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
 	'htmlOptions'=>array('class'=>'well'),
 )); ?>
 
+<?php echo $form->textFieldRow($model, 'search', array('class'=>'input-medium', 'prepend'=>'<i class="icon-search"></i>')); ?>
+
 <?php echo $form->dropDownListRow($model, 'status', array(
-	0 => Yii::t("MongoMQ", 'all'),
-	MongoMQMessage::STATUS_NEW => Yii::t("MongoMQ", 'new'),
-	MongoMQMessage::STATUS_ERROR => Yii::t("MongoMQ", 'error'),
-	MongoMQMessage::STATUS_SUCCESS =>Yii::t("MongoMQ", 'success'),
-	MongoMQMessage::STATUS_RECEIVED	=> Yii::t("MongoMQ", 'received'),
+	0 => Yii::t("MongoMQ", 'All'),
+	MongoMQMessage::STATUS_NEW => Yii::t("MongoMQ", 'New'),
+	MongoMQMessage::STATUS_ERROR => Yii::t("MongoMQ", 'Error'),
+	MongoMQMessage::STATUS_SUCCESS =>Yii::t("MongoMQ", 'Success'),
+	MongoMQMessage::STATUS_RECEIVED	=> Yii::t("MongoMQ", 'Received'),
 )); ?>
+
+
 
 <?
 $dataProvider = new EMongoDataProvider($model, array(
@@ -23,6 +27,7 @@ $dataProvider = new EMongoDataProvider($model, array(
 		'pageSize' => 100,
 	),
 ))?>
+
 
 &#160;
 <?php $this->widget('bootstrap.widgets.TbButton', array('buttonType'=>'submit', 'label'=>Yii::t("MongoMQ", 'Ok'))); ?>

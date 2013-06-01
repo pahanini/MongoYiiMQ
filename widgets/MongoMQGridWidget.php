@@ -41,9 +41,16 @@ class MongoMQGridWidget extends CWidget
 							'condition' => array(
 								'status'=>$val,
 							),
-							'sort' => array(
-								'_id' => -1
-							)
+						));
+				}
+				if ($key=='search')
+				{
+					$model->$key=$val;
+					if ($val)
+						$model->mergeDbCriteria(array(
+							'condition' => array(
+								'comment'=>new MongoRegex('/'.$val.'/i'),
+							),
 						));
 				}
 			}
