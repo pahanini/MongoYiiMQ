@@ -74,10 +74,12 @@ class MongoMQCommand extends MongoMQBaseCommand
 	 * Starts all senders
 	 * @throws CException
 	 */
-	public function actionRunSenders()
+	public function actionRunSenders($useCache=true)
 	{
 		if (!$this->_senders)
 			return;
+		if (!$useCache)
+			$this->getMongoMQComponent()->useCache=false;
 		foreach($this->_senders as $sender)
 		{
 			if (!$sender)

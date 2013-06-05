@@ -232,7 +232,7 @@ class MongoMQMessage extends MongoMQDocument
 	 * @param bool $val
 	 * @return MongoMQMessage
 	 */
-	public function ifNotQueued($val=true)
+	public function ifNotQueued($val=600)
 	{
 		$this->ifNotQueued = $val;
 		return $this;
@@ -337,7 +337,7 @@ class MongoMQMessage extends MongoMQDocument
 				{
 					$id=$this->calcCacheId($this->hash);
 					if ($cache->get($id)) return false;
-					if (!$cache->set($id, true))
+					if (!$cache->set($id, true, $this->ifNotQueued))
 					{
 						if ($cache instanceof CMemCache && $cache->useMemcached)
 							$message=$cache->getMemCache()->getResultMessage();
