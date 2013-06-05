@@ -23,6 +23,11 @@ class MongoMQ extends CApplicationComponent
 	public $db;
 
 	/**
+	 * @var null|array List of message's categories to receive
+	 */
+	public $categories=null;
+
+	/**
 	 * @var int error messages remove from queue timeout (default 30 days)
 	 */
 	public $completedTimeout = 300;
@@ -208,6 +213,10 @@ class MongoMQ extends CApplicationComponent
 				array('recipient' => $this->recipientName),
 			)
 		);
+		if (!empty($this->categories))
+			$query['category'] = array(
+				'$in' => $this->categories,
+			);
 		$update = array('$set' => array(
 			'status' => MongoMQMessage::STATUS_RECEIVED,
 			"received" => new MongoDate(),
