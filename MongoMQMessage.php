@@ -189,6 +189,7 @@ class MongoMQMessage extends MongoMQDocument
 	{
 		return array(
 			'status' => 'Status&#160;',
+			'category' => 'Category&#160;',
 		);
 	}
 

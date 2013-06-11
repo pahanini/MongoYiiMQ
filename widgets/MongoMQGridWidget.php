@@ -29,10 +29,20 @@ class MongoMQGridWidget extends CWidget
 	{
 		$model=MongoMQMessage::model();
 		$model->status=0;
-		if (isset($_POST['MongoMQMessage']))
+		if (isset($_GET['MongoMQMessage']))
 		{
-			foreach($_POST['MongoMQMessage'] as $key=>$val)
+			foreach($_GET['MongoMQMessage'] as $key=>$val)
 			{
+				if ($key=='category')
+				{
+					$model->$key=$val;
+					if ($val)
+						$model->mergeDbCriteria(array(
+							'condition' => array(
+								'category'=>$val,
+							),
+						));
+				}
 				if ($key=='status')
 				{
 					$model->$key=$val;
@@ -54,12 +64,26 @@ class MongoMQGridWidget extends CWidget
 						));
 				}
 			}
-			if (isset($_POST['delete']))
+			if (isset($_GET['operation']))
 			{
-				$criteria=$model->getDbCriteria();
-				$model->deleteAll(isset($criteria['condition']) ? $criteria['condition'] : array());
-			}
+				foreach (Yii::app()->log->routes as $route)
+					if($route instanceof CWebLogRoute)
+						$route->enabled = false;
 
+				if ($_GET['operation'] == 'delete')
+				{
+					$criteria=$model->getDbCriteria();
+					$model->deleteAll(isset($criteria['condition']) ? $criteria['condition'] : array());
+				}
+
+				Yii::app()->end();
+			}
+		}
+		else
+		{
+				$model->mergeDbCriteria(array(
+					'sort'=>array('priority' => -1, 'created' => -1),
+				));
 		}
 		$this->render('mongoMQGridWidget', array('model'=>$model));
 	}

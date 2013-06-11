@@ -4,7 +4,8 @@
 $form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
 	'id'=>'searchForm',
 	'type'=>'search',
-	'method' => 'post',
+	'method' => 'get',
+	'action' => $this->getController()->createUrl(''),
 	'htmlOptions'=>array('class'=>'well'),
 )); ?>
 
@@ -18,6 +19,19 @@ $form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
 	MongoMQMessage::STATUS_RECEIVED	=> Yii::t("MongoMQ", 'Received'),
 )); ?>
 
+<?php
+	$vals = MongoMQMessage::model()->getCollection()->distinct("category");
+	$ucVals = array();
+	foreach($vals as $val) $ucVals[]=ucfirst($val);
+	echo $form->dropDownListRow($model, 'category', array_merge(
+	array(0 => Yii::t("MongoMQ", 'All')),
+	array_combine($vals, $ucVals)
+)); ?>
+
+<?php /*var_dump(; exit(); echo $form->dropDownListRow($model, 'category', array(
+	0 => Yii::t("MongoMQ", 'All'),
+
+)); */?>
 
 
 <?
@@ -35,7 +49,11 @@ $dataProvider = new EMongoDataProvider($model, array(
 <div class='pull-right'>
 	<?php $this->widget('bootstrap.widgets.TbButton', array(
 		'htmlOptions'=>array('name'=>'delete'),
-		'buttonType'=>'submit',
+		'buttonType'=>'ajaxButton',
+		'url' => $this->getController()->createUrl('', array_merge($_GET, array('operation' => 'delete'))),
+		'ajaxOptions' => array(
+			'success' => 'window.location.reload()'
+		),
 		'label'=>Yii::t("MongoMQ", 'Delete {$n} messages', array('{$n}' => $dataProvider->getTotalItemCount()))));
 	?>
 </div>
