@@ -84,15 +84,17 @@ class MongoMQCommand extends MongoMQBaseCommand
 		{
 			if (!$sender)
 				continue;
+			if (!isset($sender['params'])) $sender['params']=array();
 			if (isset($sender['ID'], $sender['method']))
 			{
 				if (!$component=Yii::app()->getComponent($sender['ID']))
 					throw new CException("Sender component with ID = {$sender['ID']} not found");
-				if (!isset($sender['params'])) $sender['params']=array();
 				call_user_func_array(array($component, $sender['method']), $sender['params']);
 			}
+			if (isset($sender['callback']))
+				call_user_func_array($sender['callback'], $sender['params']);
 			else
-				throw new CException('Sender configuration must be an array containing  "ID" and "method" elements');
+				throw new CException('Sender configuration must be an array containing  "ID" and "method" elements or "callback" element');
 		}
 	}
 
