@@ -1,4 +1,17 @@
-<?php Yii::app()->clientScript->registerCss(__CLASS__, '.tooltip-inner { white-space:pre-wrap; text-align:left} ");') ?>
+<? Yii::app()->clientScript->registerScript('mongoMQ-modal','$("*[data-text]").click(function(){var m=$("#mongoMQGrid-modal");$("pre",m).text($(this).data("text"));m.modal("show"); return false;})', CClientScript::POS_LOAD)?>
+
+<?php $this->beginWidget('bootstrap.widgets.TbModal', array('id'=>'mongoMQGrid-modal', 'options' =>array('backdrop' => false))); ?>
+
+<div class="modal-header">
+	Result<a class="close" data-dismiss="modal">&times;</a>
+</div>
+
+<div class="modal-body">
+	<pre></pre>
+</div>
+
+<?php $this->endWidget(); ?>
+
 
 <?php /** @var BootActiveForm $form */
 $form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
@@ -28,11 +41,6 @@ $form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
 	array_combine($vals, $ucVals)
 )); ?>
 
-<?php /*var_dump(; exit(); echo $form->dropDownListRow($model, 'category', array(
-	0 => Yii::t("MongoMQ", 'All'),
-
-)); */?>
-
 
 <?
 $dataProvider = new EMongoDataProvider($model, array(
@@ -41,7 +49,6 @@ $dataProvider = new EMongoDataProvider($model, array(
 		'pageSize' => 100,
 	),
 ))?>
-
 
 &#160;
 <?php $this->widget('bootstrap.widgets.TbButton', array('buttonType'=>'submit', 'label'=>Yii::t("MongoMQ", 'Ok'))); ?>
@@ -77,8 +84,8 @@ $dataProvider = new EMongoDataProvider($model, array(
 		array('name'=>'comment', 'header'=>'Message'),
 		array('name'=>'details', 'header'=>'', 'type' => 'raw',
 			'value' => "'
-				<a href=\"#\" rel=\"tooltip\" title=\"' . print_r(\$data->params, true) . '\">Params</a>,
-				<a href=\"#\" rel=\"tooltip\" title=\"' . print_r(\$data->output, true) . '\">Output</a>
+				<a href=\"#\" data-text=\"' . htmlspecialchars(print_r(\$data->params?\$data->params:'No params', true)) . '\">Params</a>,
+				<a href=\"#\" data-text=\"' . htmlspecialchars(print_r(\$data->output?\$data->output:'Empty output', true)) . '\">Output</a>
 			'"
 		),
 		array('name'=>'category', 'header'=>'Category'),
