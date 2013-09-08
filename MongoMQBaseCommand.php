@@ -9,7 +9,7 @@
 /**
  * MongoBaseMQCommand - console command to work with MQ.
  *
- * Extend this command tp create you own
+ * Extend this command to create you own
  */
 class MongoMQBaseCommand extends CConsoleCommand
 {
@@ -21,7 +21,7 @@ class MongoMQBaseCommand extends CConsoleCommand
 
 	/**
 	 * @throws CException
-	 * @return \MongoMQ appication component
+	 * @return \MongoMQ application component
 	 */
 	protected function getMongoMQComponent()
 	{

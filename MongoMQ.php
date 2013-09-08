@@ -98,7 +98,7 @@ class MongoMQ extends CApplicationComponent
 	public $successTimeout = 864000;
 
 	/**
-	 * @var bool wheather use cache for ifNotQueued checks
+	 * @var bool whether use cache for ifNotQueued checks
 	 */
 	public $useCache = true;
 
@@ -198,7 +198,7 @@ class MongoMQ extends CApplicationComponent
 	}
 
 	/**
-	 * Recieves message from queue
+	 * Receives message from queue
 	 * @throws CException
 	 * @return MongoMQMessage
 	 */
@@ -272,7 +272,7 @@ class MongoMQ extends CApplicationComponent
 	}
 
 	/**
-	 * Recieves and executes one message
+	 * Receives and executes one message
 	 *
 	 * @return mixed null if no messages in queue, or exit code
 	 */

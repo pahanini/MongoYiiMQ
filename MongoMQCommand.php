@@ -50,7 +50,7 @@ class MongoMQCommand extends MongoMQBaseCommand
 	}
 
 	/**
-	 * Recieves and executes one message
+	 * Receives and executes one message
 	 *
 	 * @return mixed false if no messages in queue, or exit code
 	 */
