@@ -1,9 +1,12 @@
+Version 1.0 02.10.13
+-------------------
+
 - Add MongoMQGrid widget (requires Yii-bootstrap extension installed)
 - Add MongoMQMessage::sendToMe()
 - Add some useful actions to command
 
 Version 0.4 27.05.13
- -------------------
+-------------------
 - Remove collection names param
 - Add category param
 - Bug fixes
@@ -15,16 +18,16 @@ Version 0.4 27.05.13
 - Completed messages timeout
 
 Version 0.3 25.04.13
- -------------------
+-------------------
 - Callback function for message body
 - Ability to create own classes for messages
 - Minor bug fixes
 
 Version 0.2 03.04.13
- -------------------
+-------------------
 - MongoMQMessage, MongoMQRecipient extends EMongoDocument
 - MongoYii extension now required, configuration params changed
 
 Version 0.1 02.04.13
- -------------------
+-------------------
 - Base version
