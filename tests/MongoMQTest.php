@@ -8,6 +8,17 @@ class MongoMQTest extends CTestCase
 		return 'bar';
 	}
 
+	public function testSetWorkers()
+	{
+		$command = new MongoMQCommand('test', null);
+		$command->init();
+		$this->assertEquals(1, $command->workerCount);
+		$command->workers = 10;
+		$this->assertEquals(10, $command->workerCount);
+		$command->workers = array(array(10), array(5));
+		$this->assertEquals(15, $command->workerCount);
+	}
+
 	public function testMain()
 	{
 		// Create mq and clear all messages
@@ -142,15 +153,72 @@ class MongoMQTest extends CTestCase
 			->find(array('status' => MongoMQMessage::STATUS_NEW))->count());
 	}
 
-	public function testLock()
+	public function testWorkersLock()
 	{
 		Yii::app()->setRuntimePath(dirname(__FILE__));
-		$command1=new MongoMQCommand('c1', null);
-		$command2=new MongoMQCommand('c2', null);
-		$this->assertTrue($command1->getLock());
-		$this->assertFalse($command2->getLock());
-		$this->assertTrue(file_exists($command1->getLockFileName()));
-		unlink($command1->getLockFileName());
+		$worker1=new MongoMQWorker(1);
+		$worker2=new MongoMQWorker(1);
+		$this->assertTrue($worker1->getLock());
+		$this->assertFalse($worker2->getLock());
+		$this->assertTrue(file_exists($worker1->getLockFileName()));
+		unlink($worker1->getLockFileName());
+	}
+
+
+	public function testWorkers()
+	{
+		$command = new MongoMQCommand(null, null);
+		$command->setWorkers(array(
+			array(1, 'messageLimit' => 1, 'categories' => array('b')),
+			array(1, 'messageLimit' => 1, 'categories' => array('a')),
+		));
+
+		$mq = Yii::app()->mongoMQ;
+		$mq->clearMessages();
+		$mq->clearRecipients();
+
+		$message=$mq->createMessage();
+		$message->body("echo 1");
+		$message->category('a');
+		$message->send();
+		$message=$mq->createMessage();
+		$message->body("echo 1");
+		$message->category('a');
+		$message->send();
+		$message=$mq->createMessage();
+		$message->body("echo 1");
+		$message->category('b');
+		$message->send();
+		$message=$mq->createMessage();
+		$message->body("echo 1");
+		$message->category('b');
+		$message->send();
+		// Here we got 4 messages (2 with category=a and 2 with category=b)
+
+		$pid = getmypid();
+		$command->actionRun();
+		if ($pid == getmypid())
+			pcntl_wait($status);
+		else
+			exit();
+
+		// We expect only one command will be executed in each category because of messageLimit param
+
+		$this->assertEquals(2, $mq->getQueueCollection()
+			->find(array('status' => MongoMQMessage::STATUS_SUCCESS))->count());
+		$this->assertEquals(2, $mq->getQueueCollection()
+			->find(array('status' => MongoMQMessage::STATUS_NEW))->count());
+
+		$command->actionRun();
+		if ($pid == getmypid())
+			pcntl_wait($status);
+		else
+			exit();
+
+		$this->assertEquals(4, $mq->getQueueCollection()
+			->find(array('status' => MongoMQMessage::STATUS_SUCCESS))->count());
+		$this->assertEquals(0, $mq->getQueueCollection()
+			->find(array('status' => MongoMQMessage::STATUS_NEW))->count());
 	}
 
 	public function testTimeouts()
@@ -172,9 +240,8 @@ class MongoMQTest extends CTestCase
 		$mq->receivedTimeout=1;
 		$this->assertEquals(1, $message->withTimeout(MongoMQMessage::STATUS_RECEIVED, 'received', 1)->find()->count());
 
-
-		//$mq->handleTimeouts();
-		//$this->assertEquals(0, MongoMQMessage::model()->count());
+		$mq->handleTimeouts();
+		$this->assertEquals(0, MongoMQMessage::model()->count());
 	}
 
 }

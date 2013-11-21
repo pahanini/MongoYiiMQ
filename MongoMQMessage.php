@@ -115,6 +115,9 @@ class MongoMQMessage extends MongoMQDocument
 
 	/**
 	 * Executes message body
+	 *
+	 * @throws CException
+	 * @return bool
 	 */
 	public function execute()
 	{

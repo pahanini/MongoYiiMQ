@@ -44,11 +44,19 @@ Example of create message:
 
 ## Receive and execute message
 
-To execute messages you need to run:
+In application use MongoMQ::run(), MongoMQ::runOne() methods to receive and execute messages
 
       Yii::app()->mongoMQ->run();       // Receive and execute all messages
+      Yii::app()->mongoMQ->runOne();    // Receive and execute one message
 
 Indeed you need to run this command as frequently as you need.
+
+Or you can use MongoMQCommand to run messages from console or crontab
+
+       ./yiic mq run  // starts message queue workers, add this command to crontab
+
+You can configure number of workers using MongoMQCommand::setWorkers() method
+
 
 ## View Messages and Recipients
 

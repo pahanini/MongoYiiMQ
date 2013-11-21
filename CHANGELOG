@@ -1,3 +1,11 @@
+Version 2.0 21.11.13
+-------------------
+- changed version numbering system
+- workers added
+- senders mechanism removed
+- MongoMQComponent categories default value changed to true (mean get all categories of messages)
+
+
 Version 1.0 02.10.13
 -------------------
 
