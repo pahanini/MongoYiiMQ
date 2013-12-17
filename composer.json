@@ -4,6 +4,9 @@
     "keywords": ["mongodb","message queue","yii", "mq"],
     "type": "yii-extension",
     "license": "BSD-3-Clause",
+    "require": {
+        "pahanini/mongoyii": "2.*"
+    },
     "authors": [
         {
             "name": "Pahanini",

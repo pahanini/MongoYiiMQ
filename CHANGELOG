@@ -1,3 +1,7 @@
+Version 2.0.1 17.12.13
+-------------------
+- Fix composer.json
+
 Version 2.0.0 21.11.13
 -------------------
 - Changed version numbering system
