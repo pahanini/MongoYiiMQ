@@ -1,0 +1,13 @@
+{
+    "name": "pahanini/mongoyiimq",
+    "description": "MongoDB based simple message queue for Yii framework",
+    "keywords": ["mongodb","message queue","yii", "mq"],
+    "type": "yii-extension",
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Pahanini",
+            "homepage": "http://github.com/pahanini"
+        }
+    ]
+}

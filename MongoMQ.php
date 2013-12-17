@@ -3,7 +3,6 @@
  * MongoMQ class file
  *
  * @author 			Pavel E. Tetyaev <pahanini@gmail.com>
- * @version 		0.3
  */
 
 /**
@@ -23,9 +22,11 @@ class MongoMQ extends CApplicationComponent
 	public $db;
 
 	/**
-	 * @var null|array List of message's categories to receive
+	 * $categories = array('system', 'photo', 'logs'); // only receive messages with categories
+	 *
+	 * @var true|array List of message's categories to receive, true = all categories
 	 */
-	public $categories=null;
+	public $categories = true;
 
 	/**
 	 * @var int error messages remove from queue timeout (default 30 days)
@@ -199,10 +200,11 @@ class MongoMQ extends CApplicationComponent
 
 	/**
 	 * Receives message from queue
-	 * @throws CException
+	 *
+	 * @param $categories
 	 * @return MongoMQMessage
 	 */
-	public function receiveMessage()
+	public function receiveMessage($categories=true)
 	{
 		$name=$this->messagesClass;
 		$messagesCollectionName = $name::model()->collectionName();
@@ -213,9 +215,17 @@ class MongoMQ extends CApplicationComponent
 				array('recipient' => $this->recipientName),
 			)
 		);
-		if (!empty($this->categories))
+
+		// intersect categories of MongoMQComponent (global limit)
+		// and function param
+		if (is_array($this->categories) && is_array($categories))
+			$categories = array_intersect($categories, $this->categories);
+		elseif (is_array($this->categories))
+			$categories=$this->categories;
+
+		if (is_array($categories))
 			$query['category'] = array(
-				'$in' => $this->categories,
+				'$in' => $categories,
 			);
 		$update = array('$set' => array(
 			'status' => MongoMQMessage::STATUS_RECEIVED,
@@ -257,15 +267,16 @@ class MongoMQ extends CApplicationComponent
 	/**
 	 * Runs all messages (limited by runLimit param)
 	 * @param int $count
+	 * @param bool $categories
 	 * @return void
 	 */
-	public function run($count=0)
+	public function run($count=0, $categories=true)
 	{
 		$c = 0;
 		$max = max($count, $this->runLimit);
 		while (!$max || $c < $max)
 		{
-			if ($this->runOne() === null)
+			if ($this->runOne($categories) === null)
 				break;
 			$c++;
 		}
@@ -274,11 +285,12 @@ class MongoMQ extends CApplicationComponent
 	/**
 	 * Receives and executes one message
 	 *
+	 * @param $categories
 	 * @return mixed null if no messages in queue, or exit code
 	 */
-	public function runOne()
+	public function runOne($categories=true)
 	{
-		if ($message = $this->receiveMessage())
+		if ($message = $this->receiveMessage($categories))
 			return $message->execute();
 		return null;
 	}

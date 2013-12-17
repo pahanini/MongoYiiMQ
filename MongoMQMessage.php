@@ -3,7 +3,6 @@
  * MongoMQMessage class file
  *
  * @author 			Pavel E. Tetyaev <pahanini@gmail.com>
- * @version 		0.3
  */
 
 /**
