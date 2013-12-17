@@ -130,6 +130,7 @@ class MongoMQCommand extends MongoMQBaseCommand
 		}
 	}
 
+
 	public function actionShow($n=10)
 	{
 		$cursor = MongoMQMessage::model()->find()->sort(array('created' => -1))->limit($n);
@@ -205,11 +206,6 @@ class MongoMQCommand extends MongoMQBaseCommand
 		}
 	}
 
-	public function setSenders($values)
-	{
-		$this->_senders=$values;
-	}
-
 	/**
 	 * Examples:
 	 *
@@ -247,6 +243,4 @@ class MongoMQCommand extends MongoMQBaseCommand
 			}
 		}
 	}
-
-
 }
